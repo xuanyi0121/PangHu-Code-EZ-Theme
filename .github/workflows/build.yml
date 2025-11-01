@@ -1,0 +1,41 @@
+name: Build EZ-Theme
+
+on:
+  workflow_dispatch:   # 手动触发
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1️⃣ 拉取代码
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2️⃣ 设置 Node.js 环境
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      # 3️⃣ 安装依赖（含容错处理）
+      - name: Install dependencies
+        run: |
+          npm install
+          # 修复部分依赖可能缺失问题
+          npm install defu --save
+          npm install --legacy-peer-deps
+
+      # 4️⃣ 构建项目并复制配置文件
+      - name: Build project
+        run: |
+          npm run build
+          # 构建后将 /src/config/index.js 拷贝到 dist/config.js
+          cp src/config/index.js dist/config.js
+
+      # 5️⃣ 上传构建结果到 Actions
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ez-theme-dist
+          path: dist
