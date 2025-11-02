@@ -1,44 +1,92 @@
-name: Build EZ-Theme
+name: 🚀 EZ-Theme 一键打包
 
 on:
   workflow_dispatch:
+    inputs:
+      title:
+        description: '网站标题'
+        required: true
+        default: 'EZ-DEMO-TITLE'
+        type: string
+      env:
+        description: '环境'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - development
+      debugging:
+        description: '启用反调试'
+        required: true
+        default: true
+        type: boolean
+      obfuscation:
+        description: '配置混淆'
+        required: true
+        default: true
+        type: boolean
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    
     steps:
-      # 1. 拉取代码
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # 2. 设置 Node.js 环境
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      # 3. 安装依赖
-      - name: Install dependencies
-        run: |
-          npm install
-          npm install defu --save
-          npm install --legacy-peer-deps
-
-      # 4. 构建项目
-      - name: Build project
-        run: npm run build
-
-      # ✅ 5. 手动复制 config 文件到构建目录
-      - name: Copy config file to dist
-        run: |
-          mkdir -p dist/config
-          cp -r src/config/index.js dist/config/index.js
-          echo "✅ Copied src/config/index.js into dist/config/"
-
-      # 6. 上传构建产物
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: ez-theme-dist
-          path: dist
+    - name: 📥 获取代码
+      uses: actions/checkout@v3
+    
+    - name: 🔧 设置 Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: 📦 安装依赖
+      run: |
+        npm install
+        npm install defu
+    
+    - name: ⚙️ 创建环境配置
+      run: |
+        cat > .env.production << EOF
+        NODE_ENV = production
+        VUE_APP_TITLE = ${{ github.event.inputs.title }}
+        VUE_APP_ENV = ${{ github.event.inputs.env }}
+        VUE_APP_DEBUGGING = ${{ github.event.inputs.debugging }}
+        VUE_APP_CONFIGJS = true
+        VUE_APP_OBFUSCATION = ${{ github.event.inputs.obfuscation }}
+        EOF
+    
+    - name: 🔨 执行构建
+      run: |
+        npm run build
+    
+    - name: 📦 打包构建文件
+      run: |
+        zip -r build.zip dist/
+    
+    - name: 🚀 创建发布
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: build-${{ github.run_number }}
+        name: 🚀 EZ-Theme 构建 ${{ github.run_number }}
+        body: |
+          ## 🎉 构建完成！
+          
+          ### 📋 构建配置
+          - **网站标题**: ${{ github.event.inputs.title }}
+          - **环境**: ${{ github.event.inputs.env }}
+          - **反调试**: ${{ github.event.inputs.debugging }}
+          - **配置混淆**: ${{ github.event.inputs.obfuscation }}
+          - **独立配置**: ✅ 强制启用
+          
+          ### 📥 下载说明
+          1. 点击下方的 `build.zip` 下载构建文件
+          2. 解压后上传到您的服务器
+          3. 配置 Web 服务器指向 `dist` 目录
+          
+          ### 📱 技术支持
+          [@hami9ua](https://t.me/hami9ua)
+        files: build.zip
+        draft: false
+        prerelease: false
