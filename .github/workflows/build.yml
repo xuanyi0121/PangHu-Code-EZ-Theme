@@ -8,32 +8,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ 拉取代码
+      # 1. 拉取代码
       - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2️⃣ 设置 Node.js 环境
+      # 2. 设置 Node.js 环境
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      # 3️⃣ 安装依赖（含容错处理）
+      # 3. 安装项目依赖并修复可能缺失的依赖
       - name: Install dependencies
         run: |
           npm install
-          # 修复部分依赖可能缺失问题
+          # 自动安装 @vueuse/motion 可能依赖的缺失包
           npm install defu --save
-          npm install --legacy-peer-deps
+          npm install --legacy-peer-deps   # 防止 peerDependencies 报错
+          # 你还可以在这里加更多包，如果以后发现报错
 
-      # 4️⃣ 构建项目并复制配置文件
+      # 4. 构建项目
       - name: Build project
-        run: |
-          npm run build
-          # 构建后将 /src/config/index.js 拷贝到 dist/config.js
-          cp src/config/index.js dist/config.js
+        run: npm run build
 
-      # 5️⃣ 上传构建结果到 Actions
+      # 5. 上传构建产物
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
