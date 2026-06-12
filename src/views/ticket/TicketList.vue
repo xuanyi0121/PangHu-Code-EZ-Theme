@@ -1005,7 +1005,11 @@ const submitTicket = async () => {
 
             getUserSubscribe(),
 
-            getIpLocationInfo()
+            getIpLocationInfo().catch((error) => {
+                console.warn('Failed to get ticket IP location info:', error);
+
+                return null;
+            })
         ]);
 
         if (
